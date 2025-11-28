@@ -407,29 +407,36 @@ function excluirLote() {
 
 // Monitora mudanças nos checkboxes
 document.addEventListener('DOMContentLoaded', function() {
-  const checkboxes = document.querySelectorAll('input[data-datatable-row-check="true"]');
-  const checkboxAll = document.querySelector('input[data-datatable-check="true"]');
-  
-  checkboxes.forEach(cb => {
-    cb.addEventListener('change', atualizarBarraAcoes);
-  });
-  
-  if (checkboxAll) {
-    checkboxAll.addEventListener('change', function() {
-      checkboxes.forEach(cb => cb.checked = this.checked);
-      atualizarBarraAcoes();
-    });
-  }
-  
-  // Atualiza quando checkboxes individuais mudam
-  checkboxes.forEach(cb => {
-    cb.addEventListener('change', function() {
-      if (!this.checked && checkboxAll) {
-        checkboxAll.checked = false;
+  // Usa delegação de eventos para garantir que funciona mesmo após mudanças no DOM
+  document.addEventListener('change', function(e) {
+    if (e.target.type === 'checkbox') {
+      if (e.target.hasAttribute('data-datatable-row-check')) {
+        // Checkbox de linha individual
+        const checkboxAll = document.querySelector('input[data-datatable-check="true"]');
+        if (checkboxAll && !e.target.checked) {
+          checkboxAll.checked = false;
+        }
+        atualizarBarraAcoes();
+      } else if (e.target.hasAttribute('data-datatable-check')) {
+        // Checkbox "selecionar todos"
+        const checkboxes = document.querySelectorAll('input[data-datatable-row-check="true"]');
+        checkboxes.forEach(cb => cb.checked = e.target.checked);
+        atualizarBarraAcoes();
       }
-      atualizarBarraAcoes();
-    });
+    }
   });
+  
+  // Também escuta cliques para garantir que funciona
+  document.addEventListener('click', function(e) {
+    if (e.target.type === 'checkbox' && (e.target.hasAttribute('data-datatable-row-check') || e.target.hasAttribute('data-datatable-check'))) {
+      setTimeout(function() {
+        atualizarBarraAcoes();
+      }, 50);
+    }
+  });
+  
+  // Atualiza inicialmente
+  setTimeout(atualizarBarraAcoes, 100);
 });
 </script>
 </main>

@@ -253,13 +253,6 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
         </div>
         <div class="menu-accordion gap-px ps-7">
          <div class="menu-item">
-          <a class="menu-link py-2 px-2.5 rounded-md border border-transparent menu-item-active:border-gray-200 menu-item-active:bg-light menu-link-hover:bg-light menu-link-hover:border-gray-200" href="<?= base_url('Usuarios') ?>">
-           <span class="menu-title text-2sm text-gray-800 menu-item-active:text-gray-900 menu-link-hover:text-gray-900">
-            Usuários
-           </span>
-          </a>
-         </div>
-         <div class="menu-item">
           <a class="menu-link py-2 px-2.5 rounded-md border border-transparent menu-item-active:border-gray-200 menu-item-active:bg-light menu-link-hover:bg-light menu-link-hover:border-gray-200" href="<?= base_url('Produtos') ?>">
            <span class="menu-title text-2sm text-gray-800 menu-item-active:text-gray-900 menu-link-hover:text-gray-900">
             Produtos
@@ -448,6 +441,13 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
          </span>
         </div>
         <div class="menu-accordion gap-px ps-7">
+         <div class="menu-item">
+          <a class="menu-link py-2 px-2.5 rounded-md border border-transparent menu-item-active:border-gray-200 menu-item-active:bg-light menu-link-hover:bg-light menu-link-hover:border-gray-200" href="<?= base_url('Usuarios') ?>">
+           <span class="menu-title text-2sm text-gray-800 menu-item-active:text-gray-900 menu-link-hover:text-gray-900">
+            Usuários
+           </span>
+          </a>
+         </div>
          <div class="menu-item">
           <a class="menu-link py-2 px-2.5 rounded-md border border-transparent menu-item-active:border-gray-200 menu-item-active:bg-light menu-link-hover:bg-light menu-link-hover:border-gray-200" href="<?= base_url('Permissoes') ?>">
            <span class="menu-title text-2sm text-gray-800 menu-item-active:text-gray-900 menu-link-hover:text-gray-900">
