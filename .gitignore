@@ -1,6 +1,4 @@
 .env
-writable/
-
 
 writable/logs/*.log
 writable/debugbar/*.json
