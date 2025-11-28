@@ -4,3 +4,7 @@ writable/
 writable/logs/
 writable/debugbar/
 writable/session/
+
+writable/logs/*.log
+writable/debugbar/*.json
+writable/session/*
