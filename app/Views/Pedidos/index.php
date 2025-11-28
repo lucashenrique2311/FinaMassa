@@ -1,0 +1,436 @@
+<main class="grow" role="content">
+<!-- Toolbar -->
+<div class="pb-5">
+  <div class="container-fixed flex items-center justify-between flex-wrap gap-3">
+    <div class="flex items-center flex-wrap gap-1 lg:gap-5">
+      <h1 class="font-medium text-lg text-gray-900">
+        Pedidos de Venda
+      </h1>
+      <div class="flex items-center gap-1 text-sm font-normal">
+        <a class="text-gray-700 hover:text-primary" href="<?= base_url('Dashboard') ?>">
+          Dashboard
+        </a>
+        <span class="text-gray-400 text-sm">/</span>
+        <span class="text-gray-900">Pedidos</span>
+      </div>
+    </div>
+    <div class="flex items-center flex-wrap gap-1.5 lg:gap-3.5">
+      <a class="btn btn-sm btn-primary" href="<?= base_url('Pedidos/novo') ?>">
+        <i class="ki-filled ki-plus !text-base"></i>
+        Novo Pedido
+      </a>
+    </div>
+  </div>
+</div>
+<!-- End of Toolbar -->
+
+<!-- Container -->
+<div class="container-fixed" style="max-width: 1600px !important;">
+  <div class="grid gap-5 lg:gap-7.5">
+    <!-- Mensagens -->
+    <?php if (session()->getFlashdata('sucesso')): ?>
+      <div class="alert alert-success flex items-center gap-2.5 p-3 rounded-md bg-green-50 border border-green-200">
+        <i class="ki-filled ki-check-circle text-green-500"></i>
+        <span class="text-sm text-green-700"><?= session()->getFlashdata('sucesso') ?></span>
+      </div>
+    <?php endif; ?>
+
+    <?php if (session()->getFlashdata('erro')): ?>
+      <div class="alert alert-danger flex items-center gap-2.5 p-3 rounded-md bg-red-50 border border-red-200">
+        <i class="ki-filled ki-information-2 text-red-500"></i>
+        <span class="text-sm text-red-700"><?= session()->getFlashdata('erro') ?></span>
+      </div>
+    <?php endif; ?>
+
+    <!-- Card com DataTable -->
+    <div class="card card-grid min-w-full">
+      <div class="card-header flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
+        <h3 class="card-title font-medium text-sm">
+          Mostrando <?= count($pedidos) ?> pedido(s)
+        </h3>
+        <div class="flex flex-col lg:flex-row gap-3 w-full lg:w-auto lg:items-center">
+          <!-- Campo de Busca -->
+          <div class="flex flex-1 lg:flex-initial lg:min-w-[280px]">
+            <label class="input input-sm w-full">
+              <i class="ki-filled ki-magnifier"></i>
+              <input id="busca" placeholder="Buscar pedidos..." type="text" value="<?= esc($filtros['busca'] ?? '') ?>">
+            </label>
+          </div>
+          <!-- Filtros -->
+          <div class="flex flex-row gap-2.5 items-center">
+            <select id="filtro_status" class="select select-sm w-auto min-w-[140px]">
+              <option value="">Todos os Status</option>
+              <option value="ABERTO" <?= ($filtros['status'] ?? '') == 'ABERTO' ? 'selected' : '' ?>>Aberto</option>
+              <option value="PREPARANDO" <?= ($filtros['status'] ?? '') == 'PREPARANDO' ? 'selected' : '' ?>>Preparando</option>
+              <option value="PRONTO" <?= ($filtros['status'] ?? '') == 'PRONTO' ? 'selected' : '' ?>>Pronto</option>
+              <option value="ENTREGUE" <?= ($filtros['status'] ?? '') == 'ENTREGUE' ? 'selected' : '' ?>>Entregue</option>
+              <option value="CANCELADO" <?= ($filtros['status'] ?? '') == 'CANCELADO' ? 'selected' : '' ?>>Cancelado</option>
+            </select>
+            <select id="filtro_tipo" class="select select-sm w-auto min-w-[140px]">
+              <option value="">Todos os Tipos</option>
+              <option value="BALCAO" <?= ($filtros['tipo_pedido'] ?? '') == 'BALCAO' ? 'selected' : '' ?>>Balcão</option>
+              <option value="DELIVERY" <?= ($filtros['tipo_pedido'] ?? '') == 'DELIVERY' ? 'selected' : '' ?>>Delivery</option>
+              <option value="RETIRADA" <?= ($filtros['tipo_pedido'] ?? '') == 'RETIRADA' ? 'selected' : '' ?>>Retirada</option>
+            </select>
+            <button class="btn btn-sm btn-primary whitespace-nowrap" onclick="aplicarFiltros()">
+              <i class="ki-filled ki-setting-4"></i>
+              Filtrar
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Barra de ações em lote (oculta inicialmente, aparece entre header e body) -->
+      <div id="acoes_lote" class="hidden border-b border-gray-200 bg-primary/5 p-3">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span id="selecionados_count" class="text-sm font-medium text-primary">0 selecionado(s)</span>
+          <select id="novo_status_lote" class="select select-sm">
+            <option value="">Alterar Status</option>
+            <option value="ABERTO">Aberto</option>
+            <option value="PREPARANDO">Preparando</option>
+            <option value="PRONTO">Pronto</option>
+            <option value="ENTREGUE">Entregue</option>
+            <option value="CANCELADO">Cancelado</option>
+          </select>
+          <button class="btn btn-sm btn-primary" onclick="alterarStatusLote()">
+            <i class="ki-filled ki-check"></i>
+            Aplicar Status
+          </button>
+          <button class="btn btn-sm btn-danger" onclick="excluirLote()">
+            <i class="ki-filled ki-trash"></i>
+            Excluir Selecionados
+          </button>
+          <button class="btn btn-sm btn-light" onclick="limparSelecao()">
+            <i class="ki-filled ki-cross"></i>
+            Cancelar
+          </button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div data-datatable="true" data-datatable-page-size="10">
+          <div class="scrollable-x-auto">
+            <table class="table table-auto table-border" data-datatable-table="true">
+              <thead>
+                <tr>
+                  <th class="w-[60px] text-center">
+                    <input class="checkbox checkbox-sm" data-datatable-check="true" type="checkbox">
+                  </th>
+                  <th class="min-w-[120px]">
+                    <span class="sort">
+                      <span class="sort-label font-normal text-gray-700">Nº Pedido</span>
+                      <span class="sort-icon"></span>
+                    </span>
+                  </th>
+                  <th class="min-w-[150px]">
+                    <span class="sort">
+                      <span class="sort-label font-normal text-gray-700">Data</span>
+                      <span class="sort-icon"></span>
+                    </span>
+                  </th>
+                  <th class="min-w-[200px]">
+                    <span class="sort">
+                      <span class="sort-label font-normal text-gray-700">Cliente</span>
+                      <span class="sort-icon"></span>
+                    </span>
+                  </th>
+                  <th class="min-w-[120px]">
+                    <span class="sort">
+                      <span class="sort-label font-normal text-gray-700">Tipo</span>
+                      <span class="sort-icon"></span>
+                    </span>
+                  </th>
+                  <th class="min-w-[100px]">
+                    <span class="sort">
+                      <span class="sort-label font-normal text-gray-700">Status</span>
+                      <span class="sort-icon"></span>
+                    </span>
+                  </th>
+                  <th class="min-w-[120px]">
+                    <span class="sort">
+                      <span class="sort-label font-normal text-gray-700">Total</span>
+                      <span class="sort-icon"></span>
+                    </span>
+                  </th>
+                  <th class="w-28 text-center">
+                    <span class="sort-label font-normal text-gray-700">Ações</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if (empty($pedidos)): ?>
+                  <tr>
+                    <td colspan="8" class="text-center py-10 text-gray-500">
+                      Nenhum pedido encontrado.
+                    </td>
+                  </tr>
+                <?php else: ?>
+                  <?php foreach ($pedidos as $pedido): ?>
+                    <tr>
+                      <td class="text-center">
+                        <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" value="<?= $pedido['id_pedido'] ?>">
+                      </td>
+                      <td class="text-gray-800 font-medium">
+                        #<?= esc($pedido['numero_pedido']) ?>
+                      </td>
+                      <td class="text-gray-800 font-medium">
+                        <?= date('d/m/Y H:i', strtotime($pedido['data_pedido'])) ?>
+                      </td>
+                      <td>
+                        <div class="flex flex-col">
+                          <span class="text-sm font-medium text-gray-900 mb-px">
+                            <?= esc($pedido['cliente_nome'] ?? 'Cliente não informado') ?>
+                          </span>
+                          <?php if ($pedido['cliente_telefone']): ?>
+                            <span class="text-xs text-gray-500">
+                              <?= esc($pedido['cliente_telefone']) ?>
+                            </span>
+                          <?php endif; ?>
+                        </div>
+                      </td>
+                      <td>
+                        <?php
+                        $tipoLabels = [
+                          'BALCAO' => 'Balcão',
+                          'DELIVERY' => 'Delivery',
+                          'RETIRADA' => 'Retirada'
+                        ];
+                        ?>
+                        <span class="badge badge-sm"><?= $tipoLabels[$pedido['tipo_pedido']] ?? $pedido['tipo_pedido'] ?></span>
+                      </td>
+                      <td>
+                        <?php
+                        $statusClass = '';
+                        $statusLabel = '';
+                        switch($pedido['status']) {
+                          case 'ABERTO':
+                            $statusClass = 'badge-warning';
+                            $statusLabel = 'Aberto';
+                            break;
+                          case 'PREPARANDO':
+                            $statusClass = 'badge-info';
+                            $statusLabel = 'Preparando';
+                            break;
+                          case 'PRONTO':
+                            $statusClass = 'badge-primary';
+                            $statusLabel = 'Pronto';
+                            break;
+                          case 'ENTREGUE':
+                            $statusClass = 'badge-success';
+                            $statusLabel = 'Entregue';
+                            break;
+                          case 'CANCELADO':
+                            $statusClass = 'badge-danger';
+                            $statusLabel = 'Cancelado';
+                            break;
+                          default:
+                            $statusClass = 'badge';
+                            $statusLabel = $pedido['status'];
+                        }
+                        ?>
+                        <span class="badge badge-sm <?= $statusClass ?>"><?= $statusLabel ?></span>
+                      </td>
+                      <td class="text-gray-800 font-medium">
+                        R$ <?= number_format($pedido['total'] ?? 0, 2, ',', '.') ?>
+                      </td>
+                      <td>
+                        <div class="flex justify-center gap-2">
+                          <a class="btn btn-sm btn-icon btn-light" href="<?= base_url('Pedidos/visualizar/' . $pedido['id_pedido']) ?>" title="Visualizar">
+                            <i class="ki-filled ki-eye"></i>
+                          </a>
+                          <a class="btn btn-sm btn-icon btn-light" href="#" 
+                             onclick="return confirmarExclusao('<?= base_url('Pedidos/excluir/' . $pedido['id_pedido']) ?>', 'Excluir Pedido?', 'Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita!')" title="Excluir">
+                            <i class="ki-filled ki-trash"></i>
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer justify-center md:justify-between flex-col md:flex-row gap-5 text-gray-600 text-2sm font-medium">
+            <div class="flex items-center gap-2 order-2 md:order-1">
+              Mostrar
+              <select class="select select-sm w-16" data-datatable-size="true" name="perpage">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="20">20</option>
+                <option value="30">30</option>
+                <option value="50">50</option>
+              </select>
+              por página
+            </div>
+            <div class="flex items-center gap-4 order-1 md:order-2">
+              <span data-datatable-info="true">1-<?= count($pedidos) ?> de <?= count($pedidos) ?></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- End of Container -->
+
+<script>
+function aplicarFiltros() {
+  const busca = document.getElementById('busca').value;
+  const status = document.getElementById('filtro_status').value;
+  const tipo = document.getElementById('filtro_tipo').value;
+  
+  const params = new URLSearchParams();
+  if (busca) params.append('busca', busca);
+  if (status !== '') params.append('status', status);
+  if (tipo !== '') params.append('tipo_pedido', tipo);
+  
+  window.location.href = '<?= base_url('Pedidos') ?>?' + params.toString();
+}
+
+// Busca ao pressionar Enter
+document.getElementById('busca').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    aplicarFiltros();
+  }
+});
+
+// Funções para ações em lote
+function getSelecionados() {
+  const checkboxes = document.querySelectorAll('input[data-datatable-row-check="true"]:checked');
+  return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function atualizarBarraAcoes() {
+  const selecionados = getSelecionados();
+  const barraAcoes = document.getElementById('acoes_lote');
+  const countSpan = document.getElementById('selecionados_count');
+  
+  if (selecionados.length > 0) {
+    barraAcoes.classList.remove('hidden');
+    countSpan.textContent = selecionados.length + ' selecionado(s)';
+  } else {
+    barraAcoes.classList.add('hidden');
+  }
+}
+
+function limparSelecao() {
+  const checkboxes = document.querySelectorAll('input[data-datatable-row-check="true"]');
+  const checkboxAll = document.querySelector('input[data-datatable-check="true"]');
+  
+  checkboxes.forEach(cb => cb.checked = false);
+  if (checkboxAll) checkboxAll.checked = false;
+  
+  atualizarBarraAcoes();
+}
+
+function alterarStatusLote() {
+  const selecionados = getSelecionados();
+  const novoStatus = document.getElementById('novo_status_lote').value;
+  
+  if (selecionados.length === 0) {
+    SwalWarning('Atenção!', 'Selecione pelo menos um pedido.');
+    return;
+  }
+  
+  if (!novoStatus) {
+    SwalWarning('Atenção!', 'Selecione um status para aplicar.');
+    return;
+  }
+  
+  SwalConfirm(
+    'Alterar Status?',
+    `Deseja alterar o status de ${selecionados.length} pedido(s) para "${novoStatus}"?`,
+    function() {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '<?= base_url('Pedidos/alterar-status-lote') ?>';
+      
+      const csrf = document.createElement('input');
+      csrf.type = 'hidden';
+      csrf.name = '<?= csrf_token() ?>';
+      csrf.value = '<?= csrf_hash() ?>';
+      form.appendChild(csrf);
+      
+      const statusInput = document.createElement('input');
+      statusInput.type = 'hidden';
+      statusInput.name = 'status';
+      statusInput.value = novoStatus;
+      form.appendChild(statusInput);
+      
+      selecionados.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ids[]';
+        input.value = id;
+        form.appendChild(input);
+      });
+      
+      document.body.appendChild(form);
+      form.submit();
+    }
+  );
+}
+
+function excluirLote() {
+  const selecionados = getSelecionados();
+  
+  if (selecionados.length === 0) {
+    SwalWarning('Atenção!', 'Selecione pelo menos um pedido.');
+    return;
+  }
+  
+  SwalConfirm(
+    'Excluir Pedidos?',
+    `Tem certeza que deseja excluir ${selecionados.length} pedido(s)? Esta ação não pode ser desfeita!`,
+    function() {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '<?= base_url('Pedidos/excluir-lote') ?>';
+      
+      const csrf = document.createElement('input');
+      csrf.type = 'hidden';
+      csrf.name = '<?= csrf_token() ?>';
+      csrf.value = '<?= csrf_hash() ?>';
+      form.appendChild(csrf);
+      
+      selecionados.forEach(id => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ids[]';
+        input.value = id;
+        form.appendChild(input);
+      });
+      
+      document.body.appendChild(form);
+      form.submit();
+    }
+  );
+}
+
+// Monitora mudanças nos checkboxes
+document.addEventListener('DOMContentLoaded', function() {
+  const checkboxes = document.querySelectorAll('input[data-datatable-row-check="true"]');
+  const checkboxAll = document.querySelector('input[data-datatable-check="true"]');
+  
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', atualizarBarraAcoes);
+  });
+  
+  if (checkboxAll) {
+    checkboxAll.addEventListener('change', function() {
+      checkboxes.forEach(cb => cb.checked = this.checked);
+      atualizarBarraAcoes();
+    });
+  }
+  
+  // Atualiza quando checkboxes individuais mudam
+  checkboxes.forEach(cb => {
+    cb.addEventListener('change', function() {
+      if (!this.checked && checkboxAll) {
+        checkboxAll.checked = false;
+      }
+      atualizarBarraAcoes();
+    });
+  });
+});
+</script>
+</main>
+

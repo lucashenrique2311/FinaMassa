@@ -1,0 +1,18 @@
+{
+    "name": "doctorid/finanplacev2",
+    "autoload": {
+        "psr-4": {
+            "Doctorid\\Finanplacev2\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "lucashenrique2311",
+            "email": "lucas.silva@doctorid.com.br"
+        }
+    ],
+    "require": {
+        "phpoffice/phpspreadsheet": "^4.0",
+        "smalot/pdfparser": "^2.11"
+    }
+}
