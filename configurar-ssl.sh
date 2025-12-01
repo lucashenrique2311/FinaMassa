@@ -210,8 +210,19 @@ echo -e "${YELLOW}[5/6] Obtendo certificado SSL do Let's Encrypt...${NC}"
 echo -e "${BLUE}Isso pode levar alguns minutos...${NC}"
 echo ""
 
+# Verificar se www está configurado no DNS
+WWW_IP=$(dig +short www.$DOMAIN | tail -1)
+if [ -n "$WWW_IP" ] && [ "$WWW_IP" = "$SERVER_IP" ]; then
+    echo -e "${GREEN}✓ www.$DOMAIN está configurado no DNS${NC}"
+    CERTBOT_DOMAINS="-d $DOMAIN -d www.$DOMAIN"
+else
+    echo -e "${YELLOW}⚠ www.$DOMAIN não está configurado no DNS${NC}"
+    echo -e "${YELLOW}Obtendo certificado apenas para $DOMAIN${NC}"
+    CERTBOT_DOMAINS="-d $DOMAIN"
+fi
+
 # Executar Certbot
-certbot --apache -d $DOMAIN -d www.$DOMAIN --non-interactive --agree-tos --email $EMAIL --redirect
+certbot --apache $CERTBOT_DOMAINS --non-interactive --agree-tos --email $EMAIL --redirect
 
 if [ $? -eq 0 ]; then
     echo ""
