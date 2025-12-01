@@ -259,17 +259,17 @@ if [ -d "$APP_PATH" ]; then
         fi
         
         # Verificar configuração do banco de dados
-        if grep -q "^database.default.hostname" "$APP_PATH/.env"; then
-            DB_HOST=$(grep "^database.default.hostname" "$APP_PATH/.env" | cut -d'=' -f2 | tr -d ' ')
-            DB_USER=$(grep "^database.default.username" "$APP_PATH/.env" | cut -d'=' -f2 | tr -d ' ')
-            DB_NAME=$(grep "^database.default.database" "$APP_PATH/.env" | cut -d'=' -f2 | tr -d ' ')
+        if grep -q "^database.default.hostname" "$APP_PATH/.env" || grep -q "^ database.default.hostname" "$APP_PATH/.env"; then
+            DB_HOST=$(grep -E "^[ ]*database.default.hostname" "$APP_PATH/.env" | sed 's/^[ ]*//' | cut -d'=' -f2 | sed "s/^[ ]*'//; s/'[ ]*$//; s/^[ ]*//; s/[ ]*$//")
+            DB_USER=$(grep -E "^[ ]*database.default.username" "$APP_PATH/.env" | sed 's/^[ ]*//' | cut -d'=' -f2 | sed "s/^[ ]*'//; s/'[ ]*$//; s/^[ ]*//; s/[ ]*$//")
+            DB_NAME=$(grep -E "^[ ]*database.default.database" "$APP_PATH/.env" | sed 's/^[ ]*//' | cut -d'=' -f2 | sed "s/^[ ]*'//; s/'[ ]*$//; s/^[ ]*//; s/[ ]*$//")
             
             if [ -n "$DB_HOST" ] && [ -n "$DB_USER" ] && [ -n "$DB_NAME" ]; then
                 print_success "Configuração do banco de dados encontrada no .env"
                 print_info "Host: $DB_HOST | User: $DB_USER | Database: $DB_NAME"
                 
                 # Tentar conectar ao banco usando as credenciais do .env
-                DB_PASS=$(grep "^database.default.password" "$APP_PATH/.env" | cut -d'=' -f2 | tr -d ' ')
+                DB_PASS=$(grep -E "^[ ]*database.default.password" "$APP_PATH/.env" | sed 's/^[ ]*//' | cut -d'=' -f2 | sed "s/^[ ]*'//; s/'[ ]*$//; s/^[ ]*//; s/[ ]*$//")
                 
                 if [ -n "$DB_PASS" ]; then
                     if mysql -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" -e "USE $DB_NAME; SELECT 1;" &>/dev/null 2>&1; then
