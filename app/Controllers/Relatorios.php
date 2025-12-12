@@ -320,9 +320,13 @@ class Relatorios extends BaseController
                     
                     if (!empty($composicao)) {
                         // Tem composição - calcula custo baseado na composição
+                        // O subtotal na composição já é quantidade * custo_unitario do ingrediente
                         $custoProduto = 0;
                         foreach ($composicao as $ingrediente) {
-                            $custoProduto += converterQuantidadeParaFloat($ingrediente['subtotal'] ?? 0);
+                            // O subtotal vem do banco como DECIMAL, mas pode vir como string
+                            // Usa floatval diretamente, pois o banco já retorna como número
+                            $subtotal = floatval($ingrediente['subtotal'] ?? 0);
+                            $custoProduto += $subtotal;
                         }
                         // Se for meio a meio, divide o custo pela metade
                         if ($idProdutoMeioAMeio) {
@@ -332,7 +336,8 @@ class Relatorios extends BaseController
                             $composicaoMeioAMeio = $this->composicaoModel->getComposicao($idProdutoMeioAMeio);
                             $custoProdutoMeioAMeio = 0;
                             foreach ($composicaoMeioAMeio as $ingrediente) {
-                                $custoProdutoMeioAMeio += converterQuantidadeParaFloat($ingrediente['subtotal'] ?? 0);
+                                $subtotal = floatval($ingrediente['subtotal'] ?? 0);
+                                $custoProdutoMeioAMeio += $subtotal;
                             }
                             $custoProduto += ($custoProdutoMeioAMeio / 2);
                         }
@@ -387,11 +392,17 @@ class Relatorios extends BaseController
                 }
             }
             
-            $subtotal = converterQuantidadeParaFloat($pedido['subtotal'] ?? 0);
-            $desconto = converterQuantidadeParaFloat($pedido['desconto'] ?? 0);
-            $taxaEntrega = converterQuantidadeParaFloat($pedido['taxa_entrega'] ?? 0);
-            $taxaApp = converterQuantidadeParaFloat($pedido['taxa_app'] ?? 0);
-            $total = converterQuantidadeParaFloat($pedido['total'] ?? 0);
+            $subtotal = floatval($pedido['subtotal'] ?? 0);
+            $desconto = floatval($pedido['desconto'] ?? 0);
+            $taxaEntrega = floatval($pedido['taxa_entrega'] ?? 0);
+            $taxaApp = floatval($pedido['taxa_app'] ?? 0);
+            $total = floatval($pedido['total'] ?? 0);
+            
+            // Validação: se o custo for maior que 10x o total, algo está errado
+            // Nesse caso, assume que o custo é 0 (produto sem composição/custo não cadastrado)
+            if ($custoTotal > ($total * 10) && $total > 0) {
+                $custoTotal = 0;
+            }
             
             // Lucro/Prejuízo = Total - (Custo + Taxa App + Taxa Entrega)
             $lucroPrejuizo = $total - ($custoTotal + $taxaApp + $taxaEntrega);

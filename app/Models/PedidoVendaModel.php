@@ -116,20 +116,30 @@ class PedidoVendaModel extends Model
         $builder->where('id_cliente', $this->idCliente);
         $builder->where('deleted_at', null);
 
-        if (isset($filtros['status'])) {
+        if (isset($filtros['status']) && !empty($filtros['status'])) {
             $builder->where('status', $filtros['status']);
         }
 
-        if (isset($filtros['tipo_pedido'])) {
+        if (isset($filtros['tipo_pedido']) && !empty($filtros['tipo_pedido'])) {
             $builder->where('tipo_pedido', $filtros['tipo_pedido']);
         }
 
-        if (isset($filtros['data_inicio'])) {
-            $builder->where('data_pedido >=', $filtros['data_inicio']);
+        if (isset($filtros['data_inicio']) && !empty($filtros['data_inicio'])) {
+            // Garante que a data_inicio inclui o início do dia
+            $dataInicio = $filtros['data_inicio'];
+            if (strlen($dataInicio) == 10) { // Formato Y-m-d
+                $dataInicio .= ' 00:00:00';
+            }
+            $builder->where('data_pedido >=', $dataInicio);
         }
 
-        if (isset($filtros['data_fim'])) {
-            $builder->where('data_pedido <=', $filtros['data_fim'] . ' 23:59:59');
+        if (isset($filtros['data_fim']) && !empty($filtros['data_fim'])) {
+            // Garante que a data_fim inclui o final do dia
+            $dataFim = $filtros['data_fim'];
+            if (strlen($dataFim) == 10) { // Formato Y-m-d
+                $dataFim .= ' 23:59:59';
+            }
+            $builder->where('data_pedido <=', $dataFim);
         }
 
         if (isset($filtros['busca']) && !empty($filtros['busca'])) {
