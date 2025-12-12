@@ -398,10 +398,70 @@ class Relatorios extends BaseController
             $taxaApp = floatval($pedido['taxa_app'] ?? 0);
             $total = floatval($pedido['total'] ?? 0);
             
-            // Validação: se o custo for maior que 10x o total, algo está errado
-            // Nesse caso, assume que o custo é 0 (produto sem composição/custo não cadastrado)
-            if ($custoTotal > ($total * 10) && $total > 0) {
-                $custoTotal = 0;
+            // Validação: se o custo for maior que 10x o total ou for 0, tenta usar o custo_unitario do produto como fallback
+            if (($custoTotal == 0 || $custoTotal > ($total * 10)) && $total > 0 && !empty($itens)) {
+                // Recalcula usando apenas custo_unitario dos produtos
+                $custoTotalRecalculado = 0;
+                foreach ($itens as $item) {
+                    $idProduto = $item['id_produto'] ?? null;
+                    $idProdutoMeioAMeio = $item['id_produto_meio_a_meio'] ?? null;
+                    $quantidadeItem = floatval($item['quantidade'] ?? 0);
+                    
+                    if ($idProduto) {
+                        $produto = $this->produtoModel->getProduto($idProduto);
+                        if ($produto && isset($produto['custo_unitario'])) {
+                            $custoUnitario = floatval($produto['custo_unitario'] ?? 0);
+                            
+                            // Se é ingrediente, tenta pegar custo médio do estoque
+                            if ($produto['eh_ingrediente'] ?? false) {
+                                $depositoModel = new DepositoModel();
+                                $depositos = $depositoModel->getDepositos(['ativo' => 1]);
+                                if (!empty($depositos)) {
+                                    $estoque = $this->estoqueModel->getEstoqueProdutoDeposito($idProduto, $depositos[0]['id_deposito']);
+                                    if ($estoque && $estoque['custo_medio'] > 0) {
+                                        $custoUnitario = floatval($estoque['custo_medio']);
+                                    }
+                                }
+                            }
+                            
+                            // Se for meio a meio, divide pela metade
+                            if ($idProdutoMeioAMeio) {
+                                $custoUnitario = $custoUnitario / 2;
+                                
+                                // Adiciona custo do segundo produto
+                                $produtoMeioAMeio = $this->produtoModel->getProduto($idProdutoMeioAMeio);
+                                if ($produtoMeioAMeio && isset($produtoMeioAMeio['custo_unitario'])) {
+                                    $custoMeioAMeio = floatval($produtoMeioAMeio['custo_unitario'] ?? 0);
+                                    
+                                    // Se é ingrediente, tenta pegar do estoque
+                                    if ($produtoMeioAMeio['eh_ingrediente'] ?? false) {
+                                        $depositoModel = new DepositoModel();
+                                        $depositos = $depositoModel->getDepositos(['ativo' => 1]);
+                                        if (!empty($depositos)) {
+                                            $estoque = $this->estoqueModel->getEstoqueProdutoDeposito($idProdutoMeioAMeio, $depositos[0]['id_deposito']);
+                                            if ($estoque && $estoque['custo_medio'] > 0) {
+                                                $custoMeioAMeio = floatval($estoque['custo_medio']);
+                                            }
+                                        }
+                                    }
+                                    
+                                    $custoUnitario += $custoMeioAMeio / 2;
+                                }
+                            }
+                            
+                            if ($custoUnitario > 0) {
+                                $custoTotalRecalculado += $custoUnitario * $quantidadeItem;
+                            }
+                        }
+                    }
+                }
+                
+                // Se o recalculado fizer sentido (maior que 0 e menor ou igual ao total), usa ele
+                if ($custoTotalRecalculado > 0) {
+                    if ($custoTotalRecalculado <= $total || $custoTotal == 0) {
+                        $custoTotal = $custoTotalRecalculado;
+                    }
+                }
             }
             
             // Lucro/Prejuízo = Total - (Custo + Taxa App + Taxa Entrega)
