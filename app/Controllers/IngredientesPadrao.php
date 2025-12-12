@@ -4,6 +4,7 @@ use App\Models\IngredientePadraoModel;
 use App\Models\ProdutoModel;
 use App\Models\EstoqueModel;
 use App\Models\MovimentacaoEstoqueModel;
+use App\Models\DepositoModel;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -14,6 +15,7 @@ class IngredientesPadrao extends BaseController
     protected $produtoModel;
     protected $estoqueModel;
     protected $movimentacaoModel;
+    protected $depositoModel;
     protected $session;
     protected $usuario;
     protected $idCliente;
@@ -30,6 +32,7 @@ class IngredientesPadrao extends BaseController
         $this->produtoModel = new ProdutoModel();
         $this->estoqueModel = new EstoqueModel();
         $this->movimentacaoModel = new MovimentacaoEstoqueModel();
+        $this->depositoModel = new DepositoModel();
         $this->idCliente = $this->usuario['ID_CLIENTE'] ?? $this->usuario['id_cliente'] ?? null;
         
         if($this->usuario == null){
@@ -159,7 +162,9 @@ class IngredientesPadrao extends BaseController
     {
         $quantidadeInicial = $this->request->getPost('quantidade_inicial');
         if ($quantidadeInicial) {
-            $quantidadeInicial = str_replace(',', '.', $quantidadeInicial);
+            // Remove pontos de milhar e substitui vírgula por ponto
+            $quantidadeInicial = str_replace('.', '', $quantidadeInicial); // Remove separadores de milhar
+            $quantidadeInicial = str_replace(',', '.', $quantidadeInicial); // Converte vírgula decimal para ponto
             $quantidadeInicial = floatval($quantidadeInicial);
         } else {
             $quantidadeInicial = 0.000;
@@ -178,6 +183,11 @@ class IngredientesPadrao extends BaseController
         $idIngredientePadrao = $this->ingredientePadraoModel->insert($dados);
         
         if ($idIngredientePadrao) {
+            // Se tem quantidade inicial, faz entrada automática no estoque
+            if ($quantidadeInicial > 0) {
+                $this->registrarEntradaInicial($idIngredientePadrao, $quantidadeInicial, $dados['custo_padrao']);
+            }
+            
             return redirect()->to('/IngredientesPadrao')->with('sucesso', 'Ingrediente padrão criado com sucesso!');
         } else {
             $erros = $this->ingredientePadraoModel->errors();
@@ -202,7 +212,9 @@ class IngredientesPadrao extends BaseController
 
         $quantidadeInicial = $this->request->getPost('quantidade_inicial');
         if ($quantidadeInicial) {
-            $quantidadeInicial = str_replace(',', '.', $quantidadeInicial);
+            // Remove pontos de milhar e substitui vírgula por ponto
+            $quantidadeInicial = str_replace('.', '', $quantidadeInicial); // Remove separadores de milhar
+            $quantidadeInicial = str_replace(',', '.', $quantidadeInicial); // Converte vírgula decimal para ponto
             $quantidadeInicial = floatval($quantidadeInicial);
         } else {
             $quantidadeInicial = 0.000;
@@ -218,6 +230,34 @@ class IngredientesPadrao extends BaseController
         ];
 
         if ($this->ingredientePadraoModel->update($id, $dados)) {
+            // Se quantidade inicial foi alterada e é maior que zero, verifica se precisa fazer entrada
+            $quantidadeAnterior = $ingrediente_data['quantidade_inicial'] ?? 0;
+            if ($quantidadeInicial > 0 && $quantidadeInicial != $quantidadeAnterior) {
+                // Busca estoque atual do produto vinculado
+                $produtoVinculado = $this->produtoModel->where('id_cliente', $this->idCliente)
+                    ->where('codigo', 'ING-' . $id)
+                    ->first();
+                
+                if ($produtoVinculado) {
+                    // Busca depósitos ativos
+                    $depositos = $this->depositoModel->getDepositos(['ativo' => 1]);
+                    if (!empty($depositos)) {
+                        $idDeposito = $depositos[0]['id_deposito'];
+                        $estoqueAtual = $this->estoqueModel->getEstoqueProdutoDeposito($produtoVinculado['id_produto'], $idDeposito);
+                        $quantidadeAtual = $estoqueAtual ? $estoqueAtual['quantidade'] : 0;
+                        
+                        // Se a quantidade inicial é maior que o estoque atual, faz entrada da diferença
+                        if ($quantidadeInicial > $quantidadeAtual) {
+                            $quantidadeEntrada = $quantidadeInicial - $quantidadeAtual;
+                            $this->registrarEntradaInicial($id, $quantidadeEntrada, $dados['custo_padrao'], $produtoVinculado['id_produto']);
+                        }
+                    }
+                } else {
+                    // Se não tem produto vinculado, cria e faz entrada
+                    $this->registrarEntradaInicial($id, $quantidadeInicial, $dados['custo_padrao']);
+                }
+            }
+            
             return redirect()->to('/IngredientesPadrao')->with('sucesso', 'Ingrediente padrão atualizado com sucesso!');
         } else {
             $erros = $this->ingredientePadraoModel->errors();
@@ -248,6 +288,87 @@ class IngredientesPadrao extends BaseController
         } else {
             return redirect()->to('/IngredientesPadrao')->with('erro', 'Erro ao excluir ingrediente padrão.');
         }
+    }
+
+    /**
+     * Registra entrada inicial no estoque
+     */
+    private function registrarEntradaInicial($idIngredientePadrao, $quantidade, $custoPadrao, $idProdutoExistente = null)
+    {
+        // Busca ingrediente padrão
+        $ingrediente = $this->ingredientePadraoModel->getIngredientePadrao($idIngredientePadrao);
+        if (!$ingrediente) {
+            return false;
+        }
+
+        // Busca depósitos ativos
+        $depositos = $this->depositoModel->getDepositos(['ativo' => 1]);
+        if (empty($depositos)) {
+            // Se não tem depósito, não pode fazer entrada
+            return false;
+        }
+        
+        // Usa o primeiro depósito ativo
+        $idDeposito = $depositos[0]['id_deposito'];
+        $custoUnitario = floatval($custoPadrao);
+
+        // Busca ou cria produto vinculado
+        if ($idProdutoExistente) {
+            $idProduto = $idProdutoExistente;
+        } else {
+            $produtoVinculado = $this->produtoModel->where('id_cliente', $this->idCliente)
+                ->where('codigo', 'ING-' . $idIngredientePadrao)
+                ->first();
+
+            if (!$produtoVinculado) {
+                // Cria produto vinculado
+                $produtoDados = [
+                    'id_cliente' => $this->idCliente,
+                    'codigo' => 'ING-' . $idIngredientePadrao,
+                    'nome' => $ingrediente['nome'],
+                    'categoria' => $ingrediente['categoria'],
+                    'unidade_medida' => $ingrediente['unidade_medida'],
+                    'custo_unitario' => $custoUnitario,
+                    'estoque_minimo' => 0,
+                    'eh_ingrediente' => 1,
+                    'controla_estoque' => 1,
+                    'ativo' => 1,
+                ];
+                
+                $idProduto = $this->produtoModel->insert($produtoDados);
+                if (!$idProduto) {
+                    return false;
+                }
+            } else {
+                $idProduto = $produtoVinculado['id_produto'];
+            }
+        }
+
+        // Busca estoque atual
+        $estoqueAtual = $this->estoqueModel->getEstoqueProdutoDeposito($idProduto, $idDeposito);
+        $quantidadeAtual = $estoqueAtual ? $estoqueAtual['quantidade'] : 0;
+        $custoMedioAtual = $estoqueAtual ? $estoqueAtual['custo_medio'] : 0;
+
+        // Calcula novo custo médio ponderado
+        $valorAtual = $quantidadeAtual * $custoMedioAtual;
+        $valorEntrada = $quantidade * $custoUnitario;
+        $novaQuantidade = $quantidadeAtual + $quantidade;
+        $novoCustoMedio = $novaQuantidade > 0 ? ($valorAtual + $valorEntrada) / $novaQuantidade : $custoUnitario;
+
+        // Atualiza estoque
+        $this->estoqueModel->atualizarEstoque($idProduto, $idDeposito, $novaQuantidade, $novoCustoMedio);
+
+        // Registra movimentação
+        $this->movimentacaoModel->registrarMovimentacao([
+            'id_produto' => $idProduto,
+            'id_deposito' => $idDeposito,
+            'tipo' => 'ENTRADA',
+            'quantidade' => $quantidade,
+            'custo_unitario' => $custoUnitario,
+            'observacoes' => 'Entrada inicial automática - ' . $ingrediente['nome'],
+        ]);
+
+        return true;
     }
 }
 

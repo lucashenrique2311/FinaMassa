@@ -61,8 +61,6 @@ echo ""
 echo -e "${GREEN}✓ Manterá:${NC}"
 echo -e "  ✓ Usuários"
 echo -e "  ✓ Permissões"
-echo -e "  ✓ Categorias de produtos"
-echo -e "  ✓ Ingredientes padrão"
 echo ""
 
 # Confirmar
@@ -126,8 +124,6 @@ if [ $? -eq 0 ]; then
     echo -e "${BLUE}Dados mantidos:${NC}"
     echo -e "  - Usuários"
     echo -e "  - Permissões"
-    echo -e "  - Categorias de produtos"
-    echo -e "  - Ingredientes padrão"
     echo ""
 else
     echo ""

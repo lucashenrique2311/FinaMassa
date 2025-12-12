@@ -69,8 +69,7 @@
             <select id="filtro_tipo" class="select select-sm w-auto min-w-[140px]">
               <option value="">Todos os Tipos</option>
               <option value="BALCAO" <?= ($filtros['tipo_pedido'] ?? '') == 'BALCAO' ? 'selected' : '' ?>>Balcão</option>
-              <option value="DELIVERY" <?= ($filtros['tipo_pedido'] ?? '') == 'DELIVERY' ? 'selected' : '' ?>>Delivery</option>
-              <option value="RETIRADA" <?= ($filtros['tipo_pedido'] ?? '') == 'RETIRADA' ? 'selected' : '' ?>>Retirada</option>
+              <option value="APP" <?= ($filtros['tipo_pedido'] ?? '') == 'APP' ? 'selected' : '' ?>>App (UaiRango)</option>
             </select>
             <button class="btn btn-sm btn-primary whitespace-nowrap" onclick="aplicarFiltros()">
               <i class="ki-filled ki-setting-4"></i>
@@ -190,11 +189,18 @@
                         <?php
                         $tipoLabels = [
                           'BALCAO' => 'Balcão',
+                          'APP' => 'App (UaiRango)'
+                        ];
+                        $tipoEntregaLabels = [
                           'DELIVERY' => 'Delivery',
                           'RETIRADA' => 'Retirada'
                         ];
+                        $tipoExibicao = $tipoLabels[$pedido['tipo_pedido']] ?? $pedido['tipo_pedido'];
+                        if ($pedido['tipo_pedido'] === 'APP' && !empty($pedido['tipo_entrega'])) {
+                          $tipoExibicao .= ' - ' . ($tipoEntregaLabels[$pedido['tipo_entrega']] ?? $pedido['tipo_entrega']);
+                        }
                         ?>
-                        <span class="badge badge-sm"><?= $tipoLabels[$pedido['tipo_pedido']] ?? $pedido['tipo_pedido'] ?></span>
+                        <span class="badge badge-sm"><?= $tipoExibicao ?></span>
                       </td>
                       <td>
                         <?php

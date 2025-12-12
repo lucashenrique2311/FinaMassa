@@ -189,7 +189,8 @@ class Estoque extends BaseController
         }
 
         // Converte valores
-        $quantidade = floatval(str_replace(',', '.', $quantidade));
+        // Converte quantidade corretamente
+        $quantidade = converterQuantidadeParaFloat($quantidade);
         $custoUnitario = floatval(str_replace(',', '.', str_replace('.', '', $custoUnitario)));
 
         // Busca ou cria produto vinculado ao ingrediente padrão
@@ -344,7 +345,8 @@ class Estoque extends BaseController
         }
 
         // Converte quantidade
-        $quantidade = floatval(str_replace(',', '.', $quantidade));
+        // Converte quantidade corretamente
+        $quantidade = converterQuantidadeParaFloat($quantidade);
 
         // Busca produto vinculado ao ingrediente padrão
         $produtoVinculado = $this->produtoModel->where('id_cliente', $this->idCliente)
@@ -403,7 +405,8 @@ class Estoque extends BaseController
         }
 
         // Converte quantidade
-        $quantidade = floatval(str_replace(',', '.', $quantidade));
+        // Converte quantidade corretamente
+        $quantidade = converterQuantidadeParaFloat($quantidade);
 
         // Busca produto vinculado ao ingrediente padrão
         $produtoVinculado = $this->produtoModel->where('id_cliente', $this->idCliente)
@@ -449,6 +452,20 @@ class Estoque extends BaseController
             'data_inicio' => $this->request->getGet('data_inicio'),
             'data_fim' => $this->request->getGet('data_fim'),
         ];
+
+        // Se veio id_ingrediente_padrao no filtro, converte para id_produto
+        $idIngredientePadrao = $this->request->getGet('id_ingrediente_padrao');
+        if ($idIngredientePadrao) {
+            // Busca o produto vinculado ao ingrediente padrão
+            $produtoVinculado = $this->produtoModel->where('id_cliente', $this->idCliente)
+                ->where('codigo', 'ING-' . $idIngredientePadrao)
+                ->where('eh_ingrediente', 1)
+                ->first();
+            
+            if ($produtoVinculado) {
+                $filtros['id_produto'] = $produtoVinculado['id_produto'];
+            }
+        }
 
         $movimentacoes = $this->movimentacaoModel->getMovimentacoes($filtros);
         // Busca ingredientes padrão para o filtro

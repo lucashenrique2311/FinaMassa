@@ -217,6 +217,27 @@
         return $valor;
     }
 
+    /**
+     * Converte valor formatado (com vírgula/ponto) para float
+     * Remove pontos de milhar e converte vírgula decimal para ponto
+     */
+    function converterQuantidadeParaFloat($valor) {
+        if (is_numeric($valor) && !is_string($valor)) {
+            return floatval($valor);
+        }
+        
+        if (empty($valor)) {
+            return 0.0;
+        }
+        
+        // Remove pontos de milhar (ex: 1.234,56 -> 1234,56)
+        $valor = str_replace('.', '', $valor);
+        // Converte vírgula decimal para ponto (ex: 1234,56 -> 1234.56)
+        $valor = str_replace(',', '.', $valor);
+        
+        return floatval($valor);
+    }
+
     function encryptData($data) {
         $cipherMethod = 'AES-256-CBC';
         $encryptionKey = ENCRYPTION_KEY;

@@ -20,10 +20,12 @@ class PedidoVendaModel extends Model
         'cliente_telefone',
         'cliente_endereco',
         'tipo_pedido',
+        'tipo_entrega',
         'status',
         'subtotal',
         'desconto',
         'taxa_entrega',
+        'taxa_app',
         'total',
         'forma_pagamento',
         'observacoes',
@@ -47,7 +49,8 @@ class PedidoVendaModel extends Model
     protected $validationRules = [
         'id_cliente' => 'required|integer',
         'data_pedido' => 'required|valid_date',
-        'tipo_pedido' => 'required|in_list[BALCAO,DELIVERY,RETIRADA]',
+        'tipo_pedido' => 'required|in_list[BALCAO,APP]',
+        'tipo_entrega' => 'permit_empty|in_list[DELIVERY,RETIRADA]',
         'status' => 'permit_empty|in_list[ABERTO,PREPARANDO,PRONTO,ENTREGUE,CANCELADO]',
     ];
     protected $validationMessages = [];

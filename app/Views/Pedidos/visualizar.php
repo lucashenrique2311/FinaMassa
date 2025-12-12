@@ -62,13 +62,26 @@
               <?php
               $tipoLabels = [
                 'BALCAO' => 'Balcão',
+                'APP' => 'App (UaiRango)'
+              ];
+              $tipoEntregaLabels = [
                 'DELIVERY' => 'Delivery',
                 'RETIRADA' => 'Retirada'
               ];
-              echo $tipoLabels[$pedido['tipo_pedido']] ?? $pedido['tipo_pedido'];
+              $tipoExibicao = $tipoLabels[$pedido['tipo_pedido']] ?? $pedido['tipo_pedido'];
+              if ($pedido['tipo_pedido'] === 'APP' && !empty($pedido['tipo_entrega'])) {
+                $tipoExibicao .= ' - ' . ($tipoEntregaLabels[$pedido['tipo_entrega']] ?? $pedido['tipo_entrega']);
+              }
+              echo $tipoExibicao;
               ?>
             </p>
           </div>
+          <?php if ($pedido['tipo_pedido'] === 'APP' && !empty($pedido['taxa_app'])): ?>
+          <div>
+            <span class="text-sm text-gray-500">Taxa App:</span>
+            <p class="text-lg font-medium text-gray-900">R$ <?= number_format($pedido['taxa_app'] ?? 0, 2, ',', '.') ?></p>
+          </div>
+          <?php endif; ?>
           <div>
             <span class="text-sm text-gray-500">Status:</span>
             <p class="text-sm font-medium text-gray-900">

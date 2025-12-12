@@ -588,8 +588,17 @@ function atualizarIngrediente(id) {
     custoInput.value = custoPadrao.toFixed(2).replace('.', ',');
   }
   
-  const quantidade = parseFloat(quantidadeInput.value.replace(',', '.') || 0);
-  const custo = custoInput ? (parseFloat(custoInput.value.replace(',', '.').replace('.', '') || 0) / 100) : custoPadrao;
+  // Converte quantidade corretamente (remove pontos de milhar, converte vírgula para ponto)
+  const quantidadeStr = quantidadeInput.value.replace(/\./g, '').replace(',', '.');
+  const quantidade = parseFloat(quantidadeStr || 0);
+  
+  // Converte custo corretamente (remove pontos de milhar, converte vírgula para ponto)
+  let custo = custoPadrao;
+  if (custoInput && custoInput.value) {
+    const custoStr = custoInput.value.replace(/\./g, '').replace(',', '.');
+    custo = parseFloat(custoStr || 0);
+  }
+  
   const subtotal = quantidade * custo;
   
   if (subtotalInput) {

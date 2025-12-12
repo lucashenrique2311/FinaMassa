@@ -7,7 +7,6 @@
 -- mantendo apenas:
 -- - Usuários
 -- - Permissões
--- - Configurações (categorias, ingredientes padrão)
 -- - Tabela de migrations
 --
 -- ATENÇÃO: Este script é DESTRUTIVO!
@@ -45,14 +44,18 @@ TRUNCATE TABLE fornecedores;
 -- Limpar depósitos
 TRUNCATE TABLE depositos;
 
+-- Limpar categorias de produtos
+TRUNCATE TABLE categorias_produto;
+
+-- Limpar ingredientes padrão
+TRUNCATE TABLE ingredientes_padrao;
+
 -- ============================================
 -- MANTER (NÃO LIMPAR)
 -- ============================================
 -- usuarios - MANTIDO
 -- permissoes - MANTIDO
 -- usuario_permissoes - MANTIDO
--- categorias_produto - MANTIDO (configuração)
--- ingredientes_padrao - MANTIDO (configuração)
 -- migrations - MANTIDO (sistema)
 
 -- Reabilitar verificação de chaves estrangeiras
@@ -70,6 +73,8 @@ ALTER TABLE produto_composicao AUTO_INCREMENT = 1;
 ALTER TABLE produtos AUTO_INCREMENT = 1;
 ALTER TABLE fornecedores AUTO_INCREMENT = 1;
 ALTER TABLE depositos AUTO_INCREMENT = 1;
+ALTER TABLE categorias_produto AUTO_INCREMENT = 1;
+ALTER TABLE ingredientes_padrao AUTO_INCREMENT = 1;
 
 -- ============================================
 -- RESUMO
@@ -83,13 +88,13 @@ ALTER TABLE depositos AUTO_INCREMENT = 1;
 --   - produtos
 --   - fornecedores
 --   - depositos
+--   - categorias_produto
+--   - ingredientes_padrao
 --
 -- Tabelas MANTIDAS:
 --   - usuarios
 --   - permissoes
 --   - usuario_permissoes
---   - categorias_produto
---   - ingredientes_padrao
 --   - migrations
 
 SELECT 'Limpeza concluída com sucesso!' AS Status;

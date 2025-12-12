@@ -110,6 +110,12 @@
                       <span class="sort-icon"></span>
                     </span>
                   </th>
+                  <th class="min-w-[120px]">
+                    <span class="sort">
+                      <span class="sort-label font-normal text-gray-700">Valor Total</span>
+                      <span class="sort-icon"></span>
+                    </span>
+                  </th>
                   <th class="min-w-[150px]">
                     <span class="sort-label font-normal text-gray-700">Fornecedor</span>
                   </th>
@@ -118,7 +124,7 @@
               <tbody>
                 <?php if (empty($movimentacoes)): ?>
                   <tr>
-                    <td colspan="8" class="text-center py-10 text-gray-500">
+                    <td colspan="9" class="text-center py-10 text-gray-500">
                       Nenhuma movimentação encontrada.
                     </td>
                   </tr>
@@ -176,10 +182,18 @@
                         <span class="badge badge-sm <?= $tipoClass ?>"><?= $tipoLabel ?></span>
                       </td>
                       <td class="text-gray-800 font-medium">
-                        <?= number_format($mov['quantidade'] ?? 0, 3, ',', '.') ?>
+                        <?php
+                        // Formata quantidade removendo zeros à direita
+                        $qtd = floatval($mov['quantidade'] ?? 0);
+                        $qtdFormatada = rtrim(rtrim(number_format($qtd, 3, ',', '.'), '0'), ',');
+                        echo $qtdFormatada;
+                        ?>
                       </td>
                       <td class="text-gray-800 font-medium">
                         R$ <?= number_format($mov['custo_unitario'] ?? 0, 2, ',', '.') ?>
+                      </td>
+                      <td class="text-gray-800 font-medium">
+                        R$ <?= number_format(($mov['quantidade'] ?? 0) * ($mov['custo_unitario'] ?? 0), 2, ',', '.') ?>
                       </td>
                       <td class="text-gray-800 font-medium">
                         <?= esc($mov['fornecedor_nome'] ?? '-') ?>

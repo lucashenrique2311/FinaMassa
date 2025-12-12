@@ -61,28 +61,28 @@ class MovimentacaoEstoqueModel extends Model
     {
         $builder = $this->builder();
         $builder->select('movimentacoes_estoque.*, produtos.nome as produto_nome, produtos.codigo as produto_codigo, depositos.nome as deposito_nome, fornecedores.razao_social as fornecedor_nome');
-        $builder->join('produtos', 'produtos.id_produto = movimentacoes_estoque.id_produto', 'left');
-        $builder->join('depositos', 'depositos.id_deposito = movimentacoes_estoque.id_deposito', 'left');
-        $builder->join('fornecedores', 'fornecedores.id_fornecedor = movimentacoes_estoque.id_fornecedor', 'left');
+        $builder->join('produtos', 'produtos.id_produto = movimentacoes_estoque.id_produto AND produtos.id_cliente = movimentacoes_estoque.id_cliente', 'left');
+        $builder->join('depositos', 'depositos.id_deposito = movimentacoes_estoque.id_deposito AND depositos.id_cliente = movimentacoes_estoque.id_cliente', 'left');
+        $builder->join('fornecedores', 'fornecedores.id_fornecedor = movimentacoes_estoque.id_fornecedor AND fornecedores.id_cliente = movimentacoes_estoque.id_cliente', 'left');
         $builder->where('movimentacoes_estoque.id_cliente', $this->idCliente);
 
-        if (isset($filtros['tipo'])) {
+        if (isset($filtros['tipo']) && !empty($filtros['tipo'])) {
             $builder->where('movimentacoes_estoque.tipo', $filtros['tipo']);
         }
 
-        if (isset($filtros['id_produto'])) {
+        if (isset($filtros['id_produto']) && !empty($filtros['id_produto'])) {
             $builder->where('movimentacoes_estoque.id_produto', $filtros['id_produto']);
         }
 
-        if (isset($filtros['id_deposito'])) {
+        if (isset($filtros['id_deposito']) && !empty($filtros['id_deposito'])) {
             $builder->where('movimentacoes_estoque.id_deposito', $filtros['id_deposito']);
         }
 
-        if (isset($filtros['data_inicio'])) {
-            $builder->where('movimentacoes_estoque.data_movimentacao >=', $filtros['data_inicio']);
+        if (isset($filtros['data_inicio']) && !empty($filtros['data_inicio'])) {
+            $builder->where('movimentacoes_estoque.data_movimentacao >=', $filtros['data_inicio'] . ' 00:00:00');
         }
 
-        if (isset($filtros['data_fim'])) {
+        if (isset($filtros['data_fim']) && !empty($filtros['data_fim'])) {
             $builder->where('movimentacoes_estoque.data_movimentacao <=', $filtros['data_fim'] . ' 23:59:59');
         }
 

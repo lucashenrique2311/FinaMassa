@@ -170,7 +170,12 @@
                         <?php if (isset($ing['estoque_total']) && $ing['estoque_total'] > 0): ?>
                           <div class="flex flex-col">
                             <span class="text-sm font-medium text-gray-900">
-                              <?= number_format($ing['estoque_total'], 3, ',', '.') ?> <?= esc($ing['unidade_medida'] ?? 'UN') ?>
+                              <?php
+                              // Formata quantidade removendo zeros à direita
+                              $qtd = floatval($ing['estoque_total']);
+                              $qtdFormatada = rtrim(rtrim(number_format($qtd, 3, ',', '.'), '0'), ',');
+                              echo $qtdFormatada . ' ' . esc($ing['unidade_medida'] ?? 'UN');
+                              ?>
                             </span>
                             <?php if (isset($ing['custo_medio_total']) && $ing['custo_medio_total'] > 0): ?>
                               <span class="text-xs text-gray-500">
@@ -181,7 +186,11 @@
                               <div class="mt-1">
                                 <?php foreach ($ing['depositos_estoque'] as $dep): ?>
                                   <span class="text-xs text-gray-500 block">
-                                    <?= esc($dep['deposito']) ?>: <?= number_format($dep['quantidade'], 3, ',', '.') ?>
+                                    <?php
+                                    $qtdDep = floatval($dep['quantidade']);
+                                    $qtdDepFormatada = rtrim(rtrim(number_format($qtdDep, 3, ',', '.'), '0'), ',');
+                                    echo esc($dep['deposito']) . ': ' . $qtdDepFormatada;
+                                    ?>
                                   </span>
                                 <?php endforeach; ?>
                               </div>

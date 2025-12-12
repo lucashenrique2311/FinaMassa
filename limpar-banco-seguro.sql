@@ -7,7 +7,6 @@
 -- mantendo apenas:
 -- - Usuários
 -- - Permissões
--- - Configurações (categorias, ingredientes padrão)
 -- - Tabela de migrations
 --
 -- ATENÇÃO: Este script é DESTRUTIVO!
@@ -60,6 +59,12 @@ DELETE FROM fornecedores WHERE 1=1;
 -- Limpar depósitos
 DELETE FROM depositos WHERE 1=1;
 
+-- Limpar categorias de produtos
+DELETE FROM categorias_produto WHERE 1=1;
+
+-- Limpar ingredientes padrão
+DELETE FROM ingredientes_padrao WHERE 1=1;
+
 -- ============================================
 -- RESETAR AUTO_INCREMENT
 -- ============================================
@@ -72,6 +77,8 @@ ALTER TABLE produto_composicao AUTO_INCREMENT = 1;
 ALTER TABLE produtos AUTO_INCREMENT = 1;
 ALTER TABLE fornecedores AUTO_INCREMENT = 1;
 ALTER TABLE depositos AUTO_INCREMENT = 1;
+ALTER TABLE categorias_produto AUTO_INCREMENT = 1;
+ALTER TABLE ingredientes_padrao AUTO_INCREMENT = 1;
 
 -- Reabilitar verificação de chaves estrangeiras
 SET FOREIGN_KEY_CHECKS = 1;
@@ -82,5 +89,5 @@ SET FOREIGN_KEY_CHECKS = 1;
 SELECT 
     'Limpeza concluída com sucesso!' AS Status,
     'Dados operacionais removidos' AS Detalhes,
-    'Usuários e configurações mantidos' AS Observacao;
+    'Apenas usuários e permissões mantidos' AS Observacao;
 

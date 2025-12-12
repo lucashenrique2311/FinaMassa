@@ -151,7 +151,7 @@
                 />
               </label>
               <span class="text-xs text-gray-500 mt-1">
-                Quantidade inicial em estoque (apenas para referência - faça a entrada de estoque na tela de Estoque)
+                Quantidade inicial em estoque. Será registrada automaticamente uma entrada no primeiro depósito ativo ao salvar.
               </span>
             </div>
 
@@ -216,14 +216,27 @@ document.getElementById('custo_padrao')?.addEventListener('input', function(e) {
   mascaraMoeda(e.target);
 });
 
-// Máscara de quantidade inicial
+// Máscara de quantidade inicial (permite números e vírgula para decimais)
 document.getElementById('quantidade_inicial')?.addEventListener('input', function(e) {
   let value = e.target.value.replace(/[^\d,]/g, '');
-  // Permite apenas uma vírgula
-  if (value.split(',').length > 2) {
-    value = value.substring(0, value.lastIndexOf(','));
+  // Permite apenas uma vírgula para decimais
+  const partes = value.split(',');
+  if (partes.length > 2) {
+    value = partes[0] + ',' + partes.slice(1).join('');
+  }
+  // Limita a 3 casas decimais após a vírgula
+  if (partes.length === 2 && partes[1].length > 3) {
+    value = partes[0] + ',' + partes[1].substring(0, 3);
   }
   e.target.value = value;
+});
+
+// Ao perder o foco, formata o valor corretamente
+document.getElementById('quantidade_inicial')?.addEventListener('blur', function(e) {
+  let value = e.target.value.replace(/\./g, '').replace(',', '.');
+  const numValue = parseFloat(value) || 0;
+  // Formata com 3 casas decimais, vírgula como separador decimal e ponto como separador de milhar
+  e.target.value = numValue.toFixed(3).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 });
 
 // Validação do formulário

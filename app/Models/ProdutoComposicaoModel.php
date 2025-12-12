@@ -82,13 +82,18 @@ class ProdutoComposicaoModel extends Model
         
         // Salva novos itens
         foreach ($itens as $item) {
+            // Garante que quantidade e custos sejam números, não strings formatadas
+            $quantidade = converterQuantidadeParaFloat($item['quantidade'] ?? 0);
+            $custoUnitario = converterQuantidadeParaFloat($item['custo_unitario'] ?? 0);
+            $subtotal = converterQuantidadeParaFloat($item['subtotal'] ?? 0);
+            
             $this->insert([
                 'id_produto' => $idProduto,
                 'id_ingrediente' => $item['id_ingrediente'] ?? null,
                 'nome_ingrediente' => $item['nome_ingrediente'] ?? null,
-                'quantidade' => $item['quantidade'],
-                'custo_unitario' => $item['custo_unitario'],
-                'subtotal' => $item['subtotal'],
+                'quantidade' => $quantidade,
+                'custo_unitario' => $custoUnitario,
+                'subtotal' => $subtotal,
                 'observacoes' => $item['observacoes'] ?? null,
             ]);
         }

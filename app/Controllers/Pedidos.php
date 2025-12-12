@@ -176,18 +176,34 @@ class Pedidos extends BaseController
      */
     public function salvar()
     {
+        $tipoPedido = $this->request->getPost('tipo_pedido') ?: 'BALCAO';
+        $subtotal = str_replace(',', '.', str_replace('.', '', $this->request->getPost('subtotal') ?? '0'));
+        $desconto = str_replace(',', '.', str_replace('.', '', $this->request->getPost('desconto') ?? '0'));
+        $taxaEntrega = str_replace(',', '.', str_replace('.', '', $this->request->getPost('taxa_entrega') ?? '0'));
+        
+        // Calcula taxa do app se tipo for APP
+        $taxaApp = 0;
+        if ($tipoPedido === 'APP') {
+            $taxaAppPercentual = str_replace(',', '.', str_replace('.', '', $this->request->getPost('taxa_app') ?? '10'));
+            $taxaApp = ($subtotal * $taxaAppPercentual) / 100;
+        }
+        
+        $total = $subtotal - $desconto + $taxaEntrega + $taxaApp;
+        
         $dados = [
             'id_cliente' => $this->idCliente,
             'data_pedido' => $this->request->getPost('data_pedido') ?: date('Y-m-d H:i:s'),
             'cliente_nome' => $this->request->getPost('cliente_nome'),
             'cliente_telefone' => $this->request->getPost('cliente_telefone'),
             'cliente_endereco' => $this->request->getPost('cliente_endereco'),
-            'tipo_pedido' => $this->request->getPost('tipo_pedido') ?: 'BALCAO',
+            'tipo_pedido' => $tipoPedido,
+            'tipo_entrega' => $tipoPedido === 'APP' ? $this->request->getPost('tipo_entrega') : null,
             'status' => $this->request->getPost('status') ?: 'ABERTO',
-            'subtotal' => str_replace(',', '.', str_replace('.', '', $this->request->getPost('subtotal') ?? '0')),
-            'desconto' => str_replace(',', '.', str_replace('.', '', $this->request->getPost('desconto') ?? '0')),
-            'taxa_entrega' => str_replace(',', '.', str_replace('.', '', $this->request->getPost('taxa_entrega') ?? '0')),
-            'total' => str_replace(',', '.', str_replace('.', '', $this->request->getPost('total') ?? '0')),
+            'subtotal' => $subtotal,
+            'desconto' => $desconto,
+            'taxa_entrega' => $taxaEntrega,
+            'taxa_app' => $taxaApp,
+            'total' => $total,
             'forma_pagamento' => $this->request->getPost('forma_pagamento'),
             'observacoes' => $this->request->getPost('observacoes'),
             'id_usuario' => $this->idUsuario,
@@ -221,7 +237,7 @@ class Pedidos extends BaseController
                     'id_pedido' => intval($idPedido),
                     'id_produto' => !empty($item['id_produto']) ? intval($item['id_produto']) : null,
                     'nome_produto' => $nomeProduto ?: '',
-                    'quantidade' => floatval(str_replace(',', '.', $item['quantidade'] ?? '1')),
+                    'quantidade' => converterQuantidadeParaFloat($item['quantidade'] ?? '1'),
                     'preco_unitario' => floatval(str_replace(',', '.', str_replace('.', '', $item['preco_unitario'] ?? '0'))),
                     'desconto' => 0.00,
                     'subtotal' => floatval(str_replace(',', '.', str_replace('.', '', $item['subtotal'] ?? '0'))),
@@ -262,7 +278,8 @@ class Pedidos extends BaseController
                 foreach ($itens as $item) {
                     $idProduto = $item['id_produto'] ?? null;
                     $idProdutoMeioAMeio = $item['id_produto_meio_a_meio'] ?? null;
-                    $quantidadeProduto = floatval(str_replace(',', '.', $item['quantidade'] ?? '1'));
+                    // Converte quantidade corretamente
+                    $quantidadeProduto = converterQuantidadeParaFloat($item['quantidade'] ?? '1');
                     
                     // Verifica se é meio a meio
                     $ehMeioAMeio = !empty($idProdutoMeioAMeio);
@@ -348,7 +365,9 @@ class Pedidos extends BaseController
             // Tem composição - baixa estoque de cada ingrediente proporcionalmente
             foreach ($composicao as $ingrediente) {
                 // Quantidade do ingrediente = quantidade_na_composicao * quantidade_do_produto_vendido
-                $quantidadeIngrediente = floatval($ingrediente['quantidade']) * $quantidadeProduto;
+                // Garante que a quantidade vem como float (pode vir como string do banco)
+                $quantidadeNaComposicao = converterQuantidadeParaFloat($ingrediente['quantidade']);
+                $quantidadeIngrediente = $quantidadeNaComposicao * $quantidadeProduto;
                 $idIngrediente = $ingrediente['id_ingrediente'];
                 $nomeIngrediente = $ingrediente['nome_ingrediente'] ?? null;
                 

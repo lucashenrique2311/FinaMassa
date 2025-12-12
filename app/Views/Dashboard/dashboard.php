@@ -238,11 +238,18 @@
                       <?php
                       $tipoLabels = [
                         'BALCAO' => 'Balcão',
+                        'APP' => 'App (UaiRango)'
+                      ];
+                      $tipoEntregaLabels = [
                         'DELIVERY' => 'Delivery',
                         'RETIRADA' => 'Retirada'
                       ];
+                      $tipoExibicao = $tipoLabels[$pedido['tipo_pedido']] ?? $pedido['tipo_pedido'];
+                      if ($pedido['tipo_pedido'] === 'APP' && !empty($pedido['tipo_entrega'])) {
+                        $tipoExibicao .= ' - ' . ($tipoEntregaLabels[$pedido['tipo_entrega']] ?? $pedido['tipo_entrega']);
+                      }
                       ?>
-                      <span class="badge badge-sm"><?= $tipoLabels[$pedido['tipo_pedido']] ?? $pedido['tipo_pedido'] ?></span>
+                      <span class="badge badge-sm"><?= $tipoExibicao ?></span>
                     </td>
                     <td>
                       <?php

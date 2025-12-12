@@ -88,8 +88,18 @@
                 <label class="form-label text-xs font-normal text-gray-900" for="tipo_pedido">
                   Tipo
                 </label>
-                <select id="tipo_pedido" name="tipo_pedido" class="select2-select select-sm">
+                <select id="tipo_pedido" name="tipo_pedido" class="select2-select select-sm" onchange="atualizarCamposPorTipo()">
                   <option value="BALCAO">Balcão</option>
+                  <option value="APP">App (UaiRango)</option>
+                </select>
+              </div>
+
+              <!-- Tipo de Entrega (só aparece quando tipo = APP) -->
+              <div class="flex flex-col gap-1" id="tipo_entrega_wrapper" style="display: none;">
+                <label class="form-label text-xs font-normal text-gray-900" for="tipo_entrega">
+                  Entrega
+                </label>
+                <select id="tipo_entrega" name="tipo_entrega" class="select2-select select-sm">
                   <option value="DELIVERY">Delivery</option>
                   <option value="RETIRADA">Retirada</option>
                 </select>
@@ -215,6 +225,24 @@
                     name="taxa_entrega" 
                     value="0,00" 
                     placeholder="0,00"
+                    class="text-sm"
+                  />
+                </label>
+              </div>
+
+              <!-- Taxa App (só aparece quando tipo = APP) -->
+              <div class="flex flex-col gap-1" id="taxa_app_wrapper" style="display: none;">
+                <label class="form-label text-xs font-normal text-gray-900" for="taxa_app">
+                  Taxa App (%)
+                </label>
+                <label class="input input-sm">
+                  <i class="ki-filled ki-percent text-xs"></i>
+                  <input 
+                    type="text" 
+                    id="taxa_app" 
+                    name="taxa_app" 
+                    value="10,00" 
+                    placeholder="10,00"
                     class="text-sm"
                   />
                 </label>
@@ -508,11 +536,48 @@ function atualizarItensJson() {
   document.getElementById('itens_json').value = JSON.stringify(itens);
 }
 
+function atualizarCamposPorTipo() {
+  const tipoPedido = document.getElementById('tipo_pedido').value;
+  const tipoEntregaWrapper = document.getElementById('tipo_entrega_wrapper');
+  const taxaAppWrapper = document.getElementById('taxa_app_wrapper');
+  
+  if (tipoPedido === 'APP') {
+    tipoEntregaWrapper.style.display = 'block';
+    taxaAppWrapper.style.display = 'block';
+    // Inicializa Select2 se ainda não foi inicializado
+    const tipoEntregaSelect = document.getElementById('tipo_entrega');
+    if (tipoEntregaSelect && typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+      if (!jQuery(tipoEntregaSelect).hasClass('select2-hidden-accessible')) {
+        jQuery(tipoEntregaSelect).select2({
+          theme: 'default',
+          width: '100%'
+        });
+      }
+    }
+  } else {
+    tipoEntregaWrapper.style.display = 'none';
+    taxaAppWrapper.style.display = 'none';
+    document.getElementById('tipo_entrega').value = '';
+    document.getElementById('taxa_app').value = '10,00';
+  }
+  
+  atualizarTotais();
+}
+
 function atualizarTotais() {
   const subtotal = itens.reduce((sum, item) => sum + (item.subtotal || 0), 0);
   const desconto = document.getElementById('desconto').value ? converterMoedaParaNumero(document.getElementById('desconto').value) : 0;
   const taxaEntrega = document.getElementById('taxa_entrega').value ? converterMoedaParaNumero(document.getElementById('taxa_entrega').value) : 0;
-  const total = subtotal - desconto + taxaEntrega;
+  
+  // Calcula taxa do app se tipo for APP
+  let taxaAppValor = 0;
+  const tipoPedido = document.getElementById('tipo_pedido').value;
+  if (tipoPedido === 'APP') {
+    const taxaAppPercentual = document.getElementById('taxa_app').value ? converterMoedaParaNumero(document.getElementById('taxa_app').value) : 10;
+    taxaAppValor = (subtotal * taxaAppPercentual) / 100;
+  }
+  
+  const total = subtotal - desconto + taxaEntrega + taxaAppValor;
   
   // Formata valores com máscara de moeda
   let subtotalFormatado = subtotal.toFixed(2).replace('.', ',');
@@ -532,6 +597,11 @@ document.getElementById('desconto')?.addEventListener('input', function(e) {
 });
 
 document.getElementById('taxa_entrega')?.addEventListener('input', function(e) {
+  mascaraMoeda(e.target);
+  atualizarTotais();
+});
+
+document.getElementById('taxa_app')?.addEventListener('input', function(e) {
   mascaraMoeda(e.target);
   atualizarTotais();
 });

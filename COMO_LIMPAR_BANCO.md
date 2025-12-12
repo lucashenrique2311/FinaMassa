@@ -14,14 +14,14 @@ Este script é **DESTRUTIVO** e irá remover **TODOS** os dados operacionais do 
 - ❌ Fornecedores
 - ❌ Depósitos
 - ❌ Composições de produtos
+- ❌ Categorias de produtos
+- ❌ Ingredientes padrão
 
 ## O que será MANTIDO:
 
 - ✅ Usuários
 - ✅ Permissões
 - ✅ Usuário-Permissões
-- ✅ Categorias de produtos
-- ✅ Ingredientes padrão
 - ✅ Tabela de migrations
 
 ## Método 1: Script Automatizado (Recomendado)

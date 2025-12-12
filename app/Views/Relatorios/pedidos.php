@@ -53,8 +53,7 @@
             <select name="tipo_pedido" class="select select-sm" style="width: 100%;">
               <option value="">Todos</option>
               <option value="BALCAO" <?= ($filtros['tipo_pedido'] ?? '') == 'BALCAO' ? 'selected' : '' ?>>Balcão</option>
-              <option value="DELIVERY" <?= ($filtros['tipo_pedido'] ?? '') == 'DELIVERY' ? 'selected' : '' ?>>Delivery</option>
-              <option value="RETIRADA" <?= ($filtros['tipo_pedido'] ?? '') == 'RETIRADA' ? 'selected' : '' ?>>Retirada</option>
+              <option value="APP" <?= ($filtros['tipo_pedido'] ?? '') == 'APP' ? 'selected' : '' ?>>App (UaiRango)</option>
             </select>
           </div>
           <div style="display: flex; gap: 0.5rem; align-items: center;">
@@ -180,6 +179,9 @@
               <?php
               $tipoLabels = [
                 'BALCAO' => 'Balcão',
+                'APP' => 'App (UaiRango)',
+              ];
+              $tipoEntregaLabels = [
                 'DELIVERY' => 'Delivery',
                 'RETIRADA' => 'Retirada',
               ];
@@ -238,11 +240,18 @@
                       <?php
                       $tipoLabels = [
                         'BALCAO' => 'Balcão',
+                        'APP' => 'App (UaiRango)'
+                      ];
+                      $tipoEntregaLabels = [
                         'DELIVERY' => 'Delivery',
                         'RETIRADA' => 'Retirada'
                       ];
+                      $tipoExibicao = $tipoLabels[$pedido['tipo_pedido']] ?? $pedido['tipo_pedido'];
+                      if ($pedido['tipo_pedido'] === 'APP' && !empty($pedido['tipo_entrega'])) {
+                        $tipoExibicao .= ' - ' . ($tipoEntregaLabels[$pedido['tipo_entrega']] ?? $pedido['tipo_entrega']);
+                      }
                       ?>
-                      <span class="badge badge-sm"><?= $tipoLabels[$pedido['tipo_pedido']] ?? $pedido['tipo_pedido'] ?></span>
+                      <span class="badge badge-sm"><?= $tipoExibicao ?></span>
                     </td>
                     <td>
                       <?php
