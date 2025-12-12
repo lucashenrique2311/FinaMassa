@@ -185,8 +185,8 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
    <header class="flex lg:hidden items-center fixed z-10 top-0 start-0 end-0 shrink-0 bg-[--tw-page-bg] dark:bg-[--tw-page-bg-dark] h-[--tw-header-height]" id="header">
     <!-- Container -->
     <div class="container-fixed flex items-center justify-between flex-wrap gap-3">
-     <a href="<?= base_url('Dashboard') ?>">
-      <img class="min-h-[30px] max-h-[40px]" src="<?= base_url('assets/media/app/WhatsApp_Image_2025-11-24_at_11.22.48-removebg-preview.png') ?>"/>
+     <a href="<?= base_url('Dashboard') ?>" class="flex items-center shrink-0">
+      <img class="h-[30px] w-auto object-contain" src="<?= base_url('assets/media/app/WhatsApp_Image_2025-11-24_at_11.22.48-removebg-preview.png') ?>" alt="Finamassa"/>
      </a>
      <button class="btn btn-icon btn-light btn-clear btn-sm -me-2" data-drawer-toggle="#sidebar">
       <i class="ki-filled ki-menu">
@@ -417,6 +417,13 @@ License: https://keenthemes.com/metronic/tailwind/docs/getting-started/license
           <a class="menu-link py-2 px-2.5 rounded-md border border-transparent menu-item-active:border-gray-200 menu-item-active:bg-light menu-link-hover:bg-light menu-link-hover:border-gray-200" href="<?= base_url('Relatorios/produtos') ?>">
            <span class="menu-title text-2sm text-gray-800 menu-item-active:text-gray-900 menu-link-hover:text-gray-900">
             Produtos Mais Vendidos
+           </span>
+          </a>
+         </div>
+         <div class="menu-item">
+          <a class="menu-link py-2 px-2.5 rounded-md border border-transparent menu-item-active:border-gray-200 menu-item-active:bg-light menu-link-hover:bg-light menu-link-hover:border-gray-200" href="<?= base_url('Relatorios/lucro') ?>">
+           <span class="menu-title text-2sm text-gray-800 menu-item-active:text-gray-900 menu-link-hover:text-gray-900">
+            Lucro/Prejuízo
            </span>
           </a>
          </div>

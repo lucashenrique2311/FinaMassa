@@ -108,6 +108,7 @@ $routes->group('Pedidos', function($routes) {
 $routes->get('Relatorios/pedidos', 'Relatorios::pedidos');
 $routes->get('Relatorios/estoque', 'Relatorios::estoque');
 $routes->get('Relatorios/produtos', 'Relatorios::produtos');
+$routes->get('Relatorios/lucro', 'Relatorios::lucro');
 
 // Permissões
 $routes->group('Permissoes', function($routes) {

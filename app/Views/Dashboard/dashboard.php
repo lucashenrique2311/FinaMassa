@@ -90,12 +90,12 @@
     <!-- Gráfico de Vendas e Pedidos Recentes -->
     <div style="display: flex; flex-wrap: wrap; gap: 1.25rem;">
       <!-- Gráfico de Vendas (Últimos 30 dias) -->
-      <div class="card card-grid" style="flex: 2; min-width: 300px;">
+      <div class="card card-grid" style="flex: 2; min-width: 100%;">
         <div class="card-header">
           <h3 class="card-title font-medium text-sm">Vendas dos Últimos 30 Dias</h3>
         </div>
-        <div class="card-body">
-          <div id="grafico_vendas" style="height: 300px;"></div>
+        <div class="card-body" style="overflow-x: auto;">
+          <div id="grafico_vendas" style="min-width: 100%; height: 300px;"></div>
         </div>
       </div>
       
@@ -311,55 +311,186 @@ document.addEventListener('DOMContentLoaded', function() {
     const datas = Object.keys(vendasPorDia);
     const valores = Object.values(vendasPorDia);
     
+    // Detecta se é mobile
+    const isMobile = window.innerWidth <= 768;
+    
+    // No mobile, mostra apenas algumas datas (a cada 3 dias)
+    let datasExibidas = datas;
+    let valoresExibidos = valores;
+    if (isMobile && datas.length > 15) {
+      const step = Math.ceil(datas.length / 10); // Mostra aproximadamente 10 datas
+      datasExibidas = datas.filter((_, index) => index % step === 0 || index === datas.length - 1);
+      valoresExibidos = valores.filter((_, index) => index % step === 0 || index === valores.length - 1);
+    }
+    
     const options = {
       series: [{
         name: 'Vendas',
-        data: valores
+        data: valoresExibidos
       }],
       chart: {
-        type: 'area',
+        type: 'bar',
         height: 300,
         toolbar: {
           show: false
+        },
+        zoom: {
+          enabled: false
         }
       },
       dataLabels: {
         enabled: false
       },
-      stroke: {
-        curve: 'smooth',
-        width: 2
+      plotOptions: {
+        bar: {
+          borderRadius: 4,
+          columnWidth: '60%',
+          distributed: false,
+          dataLabels: {
+            position: 'top'
+          }
+        }
+      },
+      grid: {
+        borderColor: '#e5e7eb',
+        strokeDashArray: 4,
+        xaxis: {
+          lines: {
+            show: false
+          }
+        },
+        yaxis: {
+          lines: {
+            show: true
+          }
+        },
+        padding: {
+          top: 0,
+          right: 0,
+          bottom: 0,
+          left: 0
+        }
       },
       xaxis: {
-        categories: datas.map(data => {
+        categories: datasExibidas.map(data => {
           const d = new Date(data);
           return d.getDate() + '/' + (d.getMonth() + 1);
-        })
+        }),
+        labels: {
+          rotate: -45,
+          rotateAlways: false,
+          style: {
+            fontSize: '11px',
+            colors: '#6b7280'
+          },
+          show: true,
+          showDuplicates: false
+        },
+        axisBorder: {
+          show: false
+        },
+        axisTicks: {
+          show: false
+        }
       },
       yaxis: {
         labels: {
           formatter: function(val) {
-            return 'R$ ' + val.toFixed(2).replace('.', ',');
+            if (val >= 1000) {
+              return 'R$ ' + (val / 1000).toFixed(1).replace('.', ',') + 'k';
+            }
+            return 'R$ ' + val.toFixed(0).replace('.', ',');
+          },
+          style: {
+            fontSize: '11px',
+            colors: '#6b7280'
           }
         }
       },
       tooltip: {
+        theme: 'light',
         y: {
           formatter: function(val) {
             return 'R$ ' + val.toFixed(2).replace('.', ',');
           }
+        },
+        marker: {
+          show: true
         }
       },
       colors: ['#c3753c'],
-      fill: {
-        type: 'gradient',
-        gradient: {
-          shadeIntensity: 1,
-          opacityFrom: 0.7,
-          opacityTo: 0.3,
-          stops: [0, 90, 100]
+      responsive: [{
+        breakpoint: 768,
+        options: {
+          chart: {
+            height: 250
+          },
+          xaxis: {
+            labels: {
+              rotate: -45,
+              rotateAlways: true,
+              style: {
+                fontSize: '10px'
+              },
+              showDuplicates: false,
+              maxHeight: 80
+            },
+            tickAmount: 15
+          },
+          yaxis: {
+            labels: {
+              style: {
+                fontSize: '10px'
+              }
+            }
+          }
         }
-      }
+      }, {
+        breakpoint: 480,
+        options: {
+          chart: {
+            height: 220
+          },
+          plotOptions: {
+            bar: {
+              columnWidth: '50%',
+              borderRadius: 3
+            }
+          },
+          xaxis: {
+            labels: {
+              rotate: -45,
+              rotateAlways: true,
+              style: {
+                fontSize: '9px'
+              },
+              maxHeight: 80,
+              showDuplicates: false,
+              hideOverlappingLabels: true,
+              minHeight: 60
+            },
+            tickAmount: 8
+          },
+          yaxis: {
+            labels: {
+              style: {
+                fontSize: '9px'
+              },
+              formatter: function(val) {
+                if (val >= 1000) {
+                  return 'R$' + (val / 1000).toFixed(1).replace('.', ',') + 'k';
+                }
+                return 'R$' + val.toFixed(0);
+              }
+            }
+          },
+          tooltip: {
+            style: {
+              fontSize: '11px'
+            }
+          }
+        }
+      }]
     };
     
     const chart = new ApexCharts(document.querySelector("#grafico_vendas"), options);
